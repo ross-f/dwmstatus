@@ -93,9 +93,9 @@ loadavg(void)
 char
 checkNetwork(){
 	//router status
-	char * rs = execl("whatsup", "192.168.0.1");
+	char rs = execl("whatsup", "192.168.0.1");
 
-	return smprintf(rs, "###");
+	return printf(rs, "###");
 }
 
 int
