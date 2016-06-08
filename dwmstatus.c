@@ -39,12 +39,12 @@ smprintf(char *fmt, ...)
 
 	return ret;
 }
-
+/*
 void
 settz(char *tzname)
 {
 	setenv("TZ", tzname, 1);
-}
+}*/
 
 char *
 mktimes(char *fmt, char *tzname)
@@ -54,7 +54,7 @@ mktimes(char *fmt, char *tzname)
 	struct tm *timtm;
 
 	memset(buf, 0, sizeof(buf));
-	settz(tzname);
+//	settz(tzname);
 	tim = time(NULL);
 	timtm = localtime(&tim);
 	if (timtm == NULL) {
@@ -90,13 +90,6 @@ loadavg(void)
 	return smprintf("%.2f %.2f %.2f", avgs[0], avgs[1], avgs[2]);
 }
 
-char
-checkNetwork(){
-	//router status
-	char rs = execl("whatsup", "192.168.0.1");
-
-	return printf(rs, "###");
-}
 
 int
 main(void)
@@ -104,7 +97,6 @@ main(void)
 	char *status;
 	char *avgs;
 	char *tmgmt;
-	char *network;
 
 	if (!(dpy = XOpenDisplay(NULL))) {
 		fprintf(stderr, "dwmstatus: cannot open display.\n");
@@ -114,12 +106,10 @@ main(void)
 	for (;;sleep(1)) {
 		avgs = loadavg();
 		tmgmt = mktimes("%A %d %B %H:%M:%S", tzgmt);
-		network = checkNetwork();
-		
+
 		status = smprintf("%s %s",
 				avgs, tmgmt);
 		setstatus(status);
-		free(network);
 		free(avgs);
 		free(tmgmt);
 		free(status);
