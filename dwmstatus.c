@@ -9,6 +9,7 @@
 #include <time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <curl/curl.h>
 
 #include <X11/Xlib.h>
 
@@ -90,6 +91,54 @@ loadavg(void)
 	return smprintf("%.2f %.2f %.2f", avgs[0], avgs[1], avgs[2]);
 }
 
+//char *
+//serverload(void) {
+//  double savgs[3];
+//
+//  CURL *curl;
+//  CURLcode res;
+//
+//  curl = curl_easy_init();
+//
+//  if(!curl) return 0;
+//
+//  curl_eae
+
+
+char *
+batery(void){
+  char percent[4];
+  FILE *cap;
+
+  cap = fopen("/sys/class/power_supply/sbs-5-000b/capacity", "r");
+  fgets(percent, 4, (FILE*)cap);
+  strtok(percent, "\n");
+
+  fclose(cap);
+
+  if (strcmp(percent, "100") == 0 ) {
+    strcpy(percent, "Full");
+  } else {
+    strcpy(percent, strcat(percent, "%"));
+  }
+
+  return smprintf("%s",percent);
+}
+
+char *
+bright(void) {
+  char bri[3];
+  FILE *cap;
+
+  cap = fopen("/sys/class/backlight/pwm-backlight/brightness", "r");
+  fgets(bri, 3, (FILE*)cap);
+  strtok(bri, "\n");
+
+  fclose(cap);
+
+  return smprintf("%s",bri);
+}
+
 
 int
 main(void)
@@ -97,6 +146,8 @@ main(void)
 	char *status;
 	char *avgs;
 	char *tmgmt;
+	char *bat;
+  char *bri;
 
 	if (!(dpy = XOpenDisplay(NULL))) {
 		fprintf(stderr, "dwmstatus: cannot open display.\n");
@@ -106,10 +157,15 @@ main(void)
 	for (;;sleep(1)) {
 		avgs = loadavg();
 		tmgmt = mktimes("%A %d %B %H:%M:%S", tzgmt);
+    bat = batery();
+    bri = bright();
 
-		status = smprintf("%s %s",
-				avgs, tmgmt);
+		status = smprintf("%s | %s | %s | %s",
+				bri, bat, avgs, tmgmt);
 		setstatus(status);
+
+    free(bri);
+    free(bat);
 		free(avgs);
 		free(tmgmt);
 		free(status);
