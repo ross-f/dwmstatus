@@ -91,12 +91,39 @@ loadavg(void)
 	return smprintf("%.2f %.2f %.2f", avgs[0], avgs[1], avgs[2]);
 }
 
+char *
+battery(void)
+{
+	char prefix[] = "/sys/class/power_supply/BAT0/";
+	char capacityString[50];
+	char statusString[50];
+	FILE *capacity, *status;
+
+	strcpy(capacityString, prefix);
+	strcat(capacityString, "capacity");
+	strcpy(statusString, prefix);
+	strcat(statusString, "status");
+
+	capacity = fopen(capacityString, "r");
+	status = fopen(statusString, "r");
+	
+	char cbuf[4], sbuf[20];
+	fgets(cbuf, 4, capacity);
+	fgets(sbuf, 20, status);
+
+	cbuf[strlen(cbuf)-1] = 0;
+	sbuf[strlen(sbuf)-1] = 0;
+	
+	return smprintf("%s%% %s", cbuf, sbuf);
+}
+
 int
 main(void)
 {
 	char *status;
 	char *avgs;
 	char *tmgmt;
+	char *bat;
 
 	if (!(dpy = XOpenDisplay(NULL))) {
 		fprintf(stderr, "dwmstatus: cannot open display.\n");
@@ -106,13 +133,14 @@ main(void)
 	for (;;sleep(1)) {
 		avgs = loadavg();
 		tmgmt = mktimes("%A %d %B %H:%M:%S", tzgmt);
+		bat = battery();
 
-		status = smprintf("%s | %s",
-				avgs, tmgmt);
+		status = smprintf("%s | %s | %s", bat, avgs, tmgmt);
 		setstatus(status);
 
 		free(avgs);
 		free(tmgmt);
+		free(bat);
 		free(status);
 	}
 
