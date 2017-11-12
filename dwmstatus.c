@@ -94,27 +94,48 @@ loadavg(void)
 char *
 battery(void)
 {
+	// file path to batery data
 	char prefix[] = "/sys/class/power_supply/BAT0/";
 	char capacityString[50];
 	char statusString[50];
 	FILE *capacity, *status;
 
+	// build paths
 	strcpy(capacityString, prefix);
-	strcat(capacityString, "capacity");
 	strcpy(statusString, prefix);
+	strcat(capacityString, "capacity");
 	strcat(statusString, "status");
 
+	// open file buffers with read priv
 	capacity = fopen(capacityString, "r");
 	status = fopen(statusString, "r");
-	
-	char cbuf[4], sbuf[20];
-	fgets(cbuf, 4, capacity);
-	fgets(sbuf, 20, status);
 
-	cbuf[strlen(cbuf)-1] = 0;
-	sbuf[strlen(sbuf)-1] = 0;
+	char cbuf[4], sbuf[15];
 	
-	return smprintf("%s%% %s", cbuf, sbuf);
+	// pull 3 chars out of buffer for %
+	fgets(cbuf, 4, capacity);
+
+	// pull 10 chars out for name
+	fgets(sbuf, 15, status);
+
+	// close the file streams
+	fclose(capacity);
+	fclose(status);
+
+	// clip with null
+	sbuf[strlen(sbuf)-1] = 0;
+
+	// parse cap int
+	int capacityNum = atoi(cbuf);
+
+	// catch when fully charged
+	if (capacityNum == 100) {
+		return smprintf("Fully Charged");
+	}
+
+
+	
+	return smprintf("%d%% %s", capacityNum, sbuf);
 }
 
 int
